@@ -1,59 +1,52 @@
 "use client";
 
-import { useEffect, useState, useEffectEvent } from "react";
-import { useInView } from "react-intersection-observer";
+import { useState, useRef, useEffect } from "react";
+import * as m from "motion/react-m";
+import { AnimatePresence } from "motion/react";
 
-export default function Home() {
-  const [items, setItems] = useState([...Array(10)].map((_, i) => i + 1));
-  const [page, setPage] = useState(1);
-  const [isLoading, setIsLoading] = useState(false);
-  const { ref, inView } = useInView({
-    threshold: 1, // 해당 요소가 뷰포트에 100% 보일 때 inView가 true
-  });
-
-  const loadMoreItems = useEffectEvent(async () => {
-    setIsLoading(true);
-
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-
-    const nextPage = page + 1;
-    const newItems = [...Array(10)].map((_, i) => items.length + i + 1);
-
-    setItems((prevItems) => [...prevItems, ...newItems]);
-    setPage(nextPage);
-    setIsLoading(false);
-  });
+export const TypingEffect = ({
+  text,
+  typingSpeed = 150,
+}: {
+  text: string;
+  typingSpeed?: number;
+}) => {
+  // 현재 입력된 텍스트
+  const [displayText, setDisplayText] = useState("");
+  // 현재 입력된 텍스트의 인덱스
+  const [currentIndex, setCurrentIndex] = useState(0);
 
   useEffect(() => {
-    if (inView) {
-      loadMoreItems();
+    if (currentIndex < text.length) {
+      const timeout = setTimeout(() => {
+        setDisplayText((prev) => prev + text[currentIndex]);
+        setCurrentIndex((prev) => prev + 1);
+      }, typingSpeed);
+      return () => clearTimeout(timeout);
     }
-  }, [inView]);
+  }, [currentIndex, text, typingSpeed]);
 
   return (
-    <div className="container mx-auto">
-      <div className="flex flex-col gap-4">
-        {items.map((item) => (
-          <div className="h-48 border border-gray-500" key={item}>
-            {item}
-          </div>
-        ))}
-      </div>
-      {/* 해당 div가 뷰포트에 다 보일 때 더 로드 */}
-      <div ref={ref} className={`py-4 text-center`}>
-        {isLoading ? (
-          <div className="flex items-center justify-center space-x-2">
-            <div className="h-4 w-4 animate-pulse rounded-full bg-blue-500"></div>
-            <div className="h-4 w-4 animate-pulse rounded-full bg-blue-500"></div>
-            <div className="h-4 w-4 animate-pulse rounded-full bg-blue-500"></div>
-            <span className="text-gray-500">로딩 중...</span>
-          </div>
-        ) : (
-          <span className="text-gray-500">
-            더 로드하려면 스크롤을 내려주세요
-          </span>
-        )}
-      </div>
+    <div className="font-mono text-2xl">
+      {/* 현재 입력된 텍스트 */}
+      {displayText}
+
+      {/* 깜빡거리는 타이핑 커서 */}
+      <m.span
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.5, repeat: Infinity }}
+        className="ml-1 inline-block h-5 w-2 bg-black"
+      />
+    </div>
+  );
+};
+
+// 사용 예시
+export default function TypingEffectExample() {
+  return (
+    <div className="p-8">
+      <TypingEffect text="오늘은 러닝 어떤가요?" typingSpeed={100} />
     </div>
   );
 }
