@@ -1,0 +1,27 @@
+/* li reset */
+@import "tailwindcss";
+
+@theme {
+  --animate-as: slide 1.2s ease-in-out;
+
+  @keyframes slide {
+    0% {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    100% {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+@theme {
+  --animate-spin: spin 3s linear infinite;
+
+  @keyframes spin {
+    to {
+      transform: rotate(180deg);
+    }
+  }
+}
