@@ -1,46 +1,58 @@
-// src/app/page.tsx
+"use client";
 
-import InViewSlideSection from "./components/InViewSlideSection";
+import { useEffect, useState, useEffectEvent } from "react";
+import { useInView } from "react-intersection-observer";
 
-export default function Page() {
+export default function Home() {
+  const [items, setItems] = useState([...Array(10)].map((_, i) => i + 1));
+  const [page, setPage] = useState(1);
+  const [isLoading, setIsLoading] = useState(false);
+  const { ref, inView } = useInView({
+    threshold: 1, // 해당 요소가 뷰포트에 100% 보일 때 inView가 true
+  });
+
+  const loadMoreItems = useEffectEvent(async () => {
+    setIsLoading(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 1000));
+
+    const nextPage = page + 1;
+    const newItems = [...Array(10)].map((_, i) => items.length + i + 1);
+
+    setItems((prevItems) => [...prevItems, ...newItems]);
+    setPage(nextPage);
+    setIsLoading(false);
+  });
+
+  useEffect(() => {
+    if (inView) {
+      loadMoreItems();
+    }
+  }, [inView]);
+
   return (
-    <div>
-      {/* 스크롤 테스트를 위한 긴 컨텐츠 */}
-      <div className="p-4">
-        <h1 className="mb-4 text-2xl font-bold">스크롤 테스트</h1>
-
-        {[...Array(50)].map((_, i) => (
-          <p key={i} className="mb-4">
-            테스트 문단 {i + 1}. 스크롤을 내려서 슬라이드인을 확인해보세요.
-          </p>
+    <div className="container mx-auto">
+      <div className="flex flex-col gap-4">
+        {items.map((item) => (
+          <div className="h-48 border border-gray-500" key={item}>
+            {item}
+          </div>
         ))}
-
-        {/* 첫 번째 섹션: 왼쪽에서 오른쪽으로 */}
-        <InViewSlideSection
-          direction="left"
-          className="mb-8 rounded-lg bg-blue-100 p-6"
-        >
-          <h2 className="mb-2 text-xl font-bold">왼쪽에서 슬라이드</h2>
-          <p>이 섹션은 왼쪽에서 슬라이드됩니다.</p>
-        </InViewSlideSection>
-
-        {/* 두 번째 섹션: 위에서 아래로 */}
-        <InViewSlideSection
-          direction="top"
-          className="mb-8 rounded-lg bg-purple-100 p-6"
-        >
-          <h2 className="mb-2 text-xl font-bold">위에서 슬라이드</h2>
-          <p>이 섹션은 위에서 아래로 슬라이드됩니다.</p>
-        </InViewSlideSection>
-
-        {/* 세 번째 섹션: 아래에서 위로 */}
-        <InViewSlideSection
-          direction="bottom"
-          className="mb-8 rounded-lg bg-green-100 p-6"
-        >
-          <h2 className="mb-2 text-xl font-bold">아래에서 슬라이드</h2>
-          <p>이 섹션은 아래에서 위로 슬라이드됩니다.</p>
-        </InViewSlideSection>
+      </div>
+      {/* 해당 div가 뷰포트에 다 보일 때 더 로드 */}
+      <div ref={ref} className={`py-4 text-center`}>
+        {isLoading ? (
+          <div className="flex items-center justify-center space-x-2">
+            <div className="h-4 w-4 animate-pulse rounded-full bg-blue-500"></div>
+            <div className="h-4 w-4 animate-pulse rounded-full bg-blue-500"></div>
+            <div className="h-4 w-4 animate-pulse rounded-full bg-blue-500"></div>
+            <span className="text-gray-500">로딩 중...</span>
+          </div>
+        ) : (
+          <span className="text-gray-500">
+            더 로드하려면 스크롤을 내려주세요
+          </span>
+        )}
       </div>
     </div>
   );
