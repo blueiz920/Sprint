@@ -3,39 +3,67 @@
 "use client";
 
 import { useState } from "react";
+import Cookies from "js-cookie";
+import dynamic from "next/dynamic";
 
-export default function AnimateCompare() {
-  const [animated, setAnimated] = useState(false);
-  const [isAnimating, setIsAnimating] = useState(false);
+const RecentProducts = dynamic(() => import("../components/RecentProducts"), {
+  ssr: false,
+});
+
+const products = [
+  { id: 1, name: "노트북" },
+  { id: 2, name: "스마트폰" },
+  { id: 3, name: "태블릿" },
+  { id: 4, name: "이어폰" },
+  { id: 5, name: "키보드" },
+];
+
+export default function Home() {
+  const [recentProducts, setRecentProducts] = useState<string[]>(() => {
+    if (typeof window !== "undefined") {
+      // js-cookie를 이용하여 저장된 쿠키(최근 본 상품들)을 가져오세요.
+      const productCookies = Cookies.get("recentProducts");
+      if (productCookies) {
+        return JSON.parse(productCookies);
+      }
+    }
+
+    return [];
+  });
+
+  const handleProductClick = (productName: string) => {
+    const updated = [
+      productName,
+      ...recentProducts.filter((name) => name !== productName),
+    ];
+    setRecentProducts(updated);
+    // js-cookie를 이용하여 여기에 쿠키를 추가하세요.
+    Cookies.set("recentProducts", JSON.stringify(updated), { expires: 7 });
+  };
 
   return (
-    <div className="container">
-      {/* ❌ will-change 없음 — CPU 레이어로 처리 */}
-      {/* Layers 패널에서 별도 레이어로 보이지 않음 */}
-      <div>
-        <p>will-change ❌</p>
-        <div className={`box box-no-wc ${animated ? "animate" : ""}`} />
+    <div className="relative">
+      <div className="p-8">
+        <h1 className="mb-6 text-2xl font-bold">상품 목록</h1>
+        <ul className="flex flex-wrap gap-4">
+          {products.map((product) => (
+            <li key={product.id}>
+              <button
+                onClick={() => handleProductClick(product.name)}
+                className="cursor-pointer rounded border p-4 hover:bg-gray-100"
+              >
+                {product.name}
+              </button>
+            </li>
+          ))}
+        </ul>
       </div>
-
-      {/* ✅ will-change 있음 — GPU 레이어로 승격 */}
-      {/* Layers 패널에서 별도 Compositing Layer로 표시됨 */}
-      <div>
-        <p>will-change ✅</p>
-        <div
-          className={`box box-wc ${animated ? "animate" : ""}`}
-          style={{ willChange: isAnimating ? "transform" : "auto" }}
-          onTransitionEnd={() => setIsAnimating(false)} // 3. 애니메이션 완료 → will-change 해제
-        />
+      <div className="fixed top-4 right-4 rounded bg-blue-500 p-4 text-white shadow-lg">
+        <div className="mb-2 font-bold">최근 본 상품</div>
+        <ul className="space-y-1">
+          <RecentProducts recentProducts={recentProducts} />
+        </ul>
       </div>
-
-      {/* onMouseEnter: 클릭 전 미리 GPU 레이어 준비 */}
-      <button
-        onMouseEnter={() => setIsAnimating(true)} // 1. hover 시 will-change 사전 적용
-        onClick={() => setAnimated((prev) => !prev)} // 2. 클릭 시 애니메이션 시작
-        onMouseLeave={() => setIsAnimating(false)} // 3. hover 해제 시 will-change 해제
-      >
-        {animated ? "되돌리기" : "애니메이션 실행"}
-      </button>
     </div>
   );
 }
