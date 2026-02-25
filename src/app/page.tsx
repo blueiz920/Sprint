@@ -1,52 +1,41 @@
+// src/app/page.tsx
+
 "use client";
 
-import { useState, useRef, useEffect } from "react";
-import * as m from "motion/react-m";
-import { AnimatePresence } from "motion/react";
+import { useState } from "react";
 
-export const TypingEffect = ({
-  text,
-  typingSpeed = 150,
-}: {
-  text: string;
-  typingSpeed?: number;
-}) => {
-  // 현재 입력된 텍스트
-  const [displayText, setDisplayText] = useState("");
-  // 현재 입력된 텍스트의 인덱스
-  const [currentIndex, setCurrentIndex] = useState(0);
-
-  useEffect(() => {
-    if (currentIndex < text.length) {
-      const timeout = setTimeout(() => {
-        setDisplayText((prev) => prev + text[currentIndex]);
-        setCurrentIndex((prev) => prev + 1);
-      }, typingSpeed);
-      return () => clearTimeout(timeout);
-    }
-  }, [currentIndex, text, typingSpeed]);
+export default function AnimateCompare() {
+  const [animated, setAnimated] = useState(false);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   return (
-    <div className="font-mono text-2xl">
-      {/* 현재 입력된 텍스트 */}
-      {displayText}
+    <div className="container">
+      {/* ❌ will-change 없음 — CPU 레이어로 처리 */}
+      {/* Layers 패널에서 별도 레이어로 보이지 않음 */}
+      <div>
+        <p>will-change ❌</p>
+        <div className={`box box-no-wc ${animated ? "animate" : ""}`} />
+      </div>
 
-      {/* 깜빡거리는 타이핑 커서 */}
-      <m.span
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, repeat: Infinity }}
-        className="ml-1 inline-block h-5 w-2 bg-black"
-      />
-    </div>
-  );
-};
+      {/* ✅ will-change 있음 — GPU 레이어로 승격 */}
+      {/* Layers 패널에서 별도 Compositing Layer로 표시됨 */}
+      <div>
+        <p>will-change ✅</p>
+        <div
+          className={`box box-wc ${animated ? "animate" : ""}`}
+          style={{ willChange: isAnimating ? "transform" : "auto" }}
+          onTransitionEnd={() => setIsAnimating(false)} // 3. 애니메이션 완료 → will-change 해제
+        />
+      </div>
 
-// 사용 예시
-export default function TypingEffectExample() {
-  return (
-    <div className="p-8">
-      <TypingEffect text="오늘은 러닝 어떤가요?" typingSpeed={100} />
+      {/* onMouseEnter: 클릭 전 미리 GPU 레이어 준비 */}
+      <button
+        onMouseEnter={() => setIsAnimating(true)} // 1. hover 시 will-change 사전 적용
+        onClick={() => setAnimated((prev) => !prev)} // 2. 클릭 시 애니메이션 시작
+        onMouseLeave={() => setIsAnimating(false)} // 3. hover 해제 시 will-change 해제
+      >
+        {animated ? "되돌리기" : "애니메이션 실행"}
+      </button>
     </div>
   );
 }
