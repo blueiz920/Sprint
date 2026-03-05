@@ -1,17 +1,26 @@
-import { render, screen } from "@testing-library/react";
+// app/page.test.tsx
+
+import { fireEvent, render, screen } from "@testing-library/react";
 import Home from "./page";
+import useCounterStore from "@/stores/useCounterStore";
 
-test("메인 페이지의 테스트가 올바르게 렌더링되는지 확인", () => {
-  //함수 가져오기 ->테스트
-  // 테스트 실행(npm run test)vs브라우저에서 확인(npm run dev)
-  // react testing library -> 임시로 렌더링을 해주는 기능
-  // 1. Home 컴포넌트를 렌더링한다.
-  render(<Home />);
+describe("Home 페이지 테스트", () => {
+  test("첫 렌더링 시 초기값은 0이다.", () => {
+    render(<Home />);
+    expect(screen.getByText("Count: 0")).toBeInTheDocument();
+  });
 
-  // 2. "컴포넌트 테스트 연습하기" 텍스트를 가진 요소를 찾는다. (screen으로)
-  // 그리고  screen.어쩌구로 쿼리를 이용해 요소를 가져온다.
-  const element = screen.getByText("컴포넌트 테스트 연습하기");
+  test("증가 버튼 클릭 시 카운트가 증가해야 한다.", () => {
+    render(<Home />);
+    const incrementButton = screen.getByText("증가");
+    fireEvent.click(incrementButton);
+    expect(screen.getByText("Count: 1")).toBeInTheDocument();
+  });
 
-  // 3. 해당 요소가 화면에 실제로 있는지 검증한다.
-  expect(element).toBeInTheDocument();
+  test("감소 버튼 클릭 시 카운트가 감소해야 한다.", () => {
+    render(<Home />);
+    const decrementButton = screen.getByText("감소");
+    fireEvent.click(decrementButton);
+    expect(screen.getByText("Count: -1")).toBeInTheDocument(); //zustand는 전역이므로 test가 끝나도 초기화 되지 않음
+  });
 });

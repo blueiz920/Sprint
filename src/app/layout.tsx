@@ -1,5 +1,5 @@
 // app/layout.tsx
-import LazyMotionProvider from "@/providers/LazyMotionProvider";
+import { AuthProvider } from "@/contexts/AuthContext";
 import "./globals.css";
 
 export default function RootLayout({
@@ -10,7 +10,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body>
-        <LazyMotionProvider>{children}</LazyMotionProvider>
+        <AuthProvider>{children}</AuthProvider>
       </body>
     </html>
   );
